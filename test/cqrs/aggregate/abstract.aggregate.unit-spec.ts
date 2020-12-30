@@ -1,0 +1,3 @@
+describe('AbstractAggregate (unit)', () => {
+  return;
+});
