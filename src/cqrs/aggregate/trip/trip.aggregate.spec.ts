@@ -7,8 +7,6 @@ import { TripCommand } from './command/trip.command';
 describe('CQRS TripAggregate (integration)', () => {
   let tripAggregate: TripAggregate;
   const date = new Date();
-  const year = date.getFullYear();
-  const month = date.getMonth();
 
   beforeEach(() => {
     tripAggregate = new TripAggregate(Guid.fromBigInt(0n));
@@ -16,20 +14,13 @@ describe('CQRS TripAggregate (integration)', () => {
 
   it('handles GoOutCommand', async () => {
     const goOutRoad = new GoOutCommand(TripBicycleType.Road, 20, 30, date);
-    const goOutMT = new GoOutCommand(TripBicycleType.MT, 10, 60, date);
-    const goOutHT = new GoOutCommand(TripBicycleType.HT, 30, 45, date);
     const goOutErrorType = new GoOutCommand('Unexpected', 30, 45, date);
     const goOutErrorDist = new GoOutCommand(TripBicycleType.Road, -1, 45, date);
     const goOutErrorTime = new GoOutCommand(TripBicycleType.Road, 30, -1, date);
-    const tripProjection = await tripAggregate.tripProjection();
 
-    const distance = () => tripProjection.getDistance(year, month);
+    expect(tripAggregate.bus.events.length).toEqual(0);
     await tripAggregate.handleCommand(goOutRoad);
-    expect(distance()).toEqual(20);
-    await tripAggregate.handleCommand(goOutMT);
-    expect(distance()).toEqual(30);
-    await tripAggregate.handleCommand(goOutHT);
-    expect(distance()).toEqual(60);
+    expect(tripAggregate.bus.events.length).toEqual(1);
 
     await expect(() =>
       tripAggregate.handleCommand(goOutErrorType),
@@ -44,6 +35,7 @@ describe('CQRS TripAggregate (integration)', () => {
     ).rejects.toThrow(
       `durationInMinutes (${goOutErrorTime.durationInMinutes}) cannot be <= 0`,
     );
+    expect(tripAggregate.bus.events.length).toEqual(1);
   });
 
   it('builds projection only once', async () => {
