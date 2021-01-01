@@ -8,13 +8,12 @@ import {
 import { AbstractEventSubscriber } from './abstract.event.subscriber';
 
 describe('CQRS EventBus (integration)', () => {
+  const aggregate = new TripAggregate(Guid.fromBigInt(0n));
   it('returns empty events array', () => {
-    const aggregate = new TripAggregate(Guid.fromBigInt(0n));
     const eventBus = new EventBus(aggregate);
     expect(eventBus.events).toEqual([]);
   });
   it('return published events', () => {
-    const aggregate = new TripAggregate(Guid.fromBigInt(0n));
     const eventBus = new EventBus(aggregate);
     const wentOutEvent = new WentOutEvent(
       1,
@@ -27,7 +26,6 @@ describe('CQRS EventBus (integration)', () => {
     expect(eventBus.events).toEqual([wentOutEvent]);
   });
   it('return last event id', () => {
-    const aggregate = new TripAggregate(Guid.fromBigInt(0n));
     const eventBus = new EventBus(aggregate);
     const wentOutEvent = new WentOutEvent(
       1,
@@ -40,7 +38,6 @@ describe('CQRS EventBus (integration)', () => {
     expect(eventBus.lastId()).toEqual(wentOutEvent.id);
   });
   it('allows subscribers to handle published events', () => {
-    const aggregate = new TripAggregate(Guid.fromBigInt(0n));
     const eventBus = new EventBus(aggregate);
     const wentOutEvent = new WentOutEvent(
       1,
@@ -58,5 +55,18 @@ describe('CQRS EventBus (integration)', () => {
     eventBus.subscribe(subscriber);
     eventBus.publish(wentOutEvent);
     expect(handledFn).toBeCalledWith(wentOutEvent);
+  });
+  it('rejects event with an id inferior or equal to the last one', () => {
+    const eventBus = new EventBus(aggregate);
+    const wentOutEvent = new WentOutEvent(
+      1,
+      new Date(),
+      TripBicycleType.Road,
+      1,
+      1,
+    );
+    eventBus.publish(wentOutEvent);
+    const msg = `event id ${wentOutEvent.id} is <= to last event id (${wentOutEvent.id}) of the aggregate ${aggregate.guid}`;
+    expect(() => eventBus.publish(wentOutEvent)).rejects.toThrow(msg);
   });
 });

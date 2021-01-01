@@ -7,16 +7,23 @@ import { GoOutCommand } from './command/go.out.command';
 import { TripBicycleType, WentOutEvent } from './event/went.out.event';
 
 export class TripAggregate extends AbstractAggregate<TripEvent, TripCommand> {
-  public readonly tripProjection = TripProjection.fromAggregate(this);
-
   public constructor(guid: Guid) {
     super(guid);
+  }
+
+  private _tripProjectionPromise: Promise<TripProjection> | undefined;
+  public tripProjection(): Promise<TripProjection> {
+    if (!this._tripProjectionPromise) {
+      this._tripProjectionPromise = TripProjection.fromAggregate(this);
+    }
+    return this._tripProjectionPromise;
   }
 
   public async handleCommand(command: TripCommand): Promise<unknown> {
     if (command instanceof GoOutCommand) {
       return this._handleGoOutCommand(command);
     }
+    throw new Error(`unexpected command type "${typeof command}" received`);
   }
 
   private async _handleGoOutCommand(command: GoOutCommand): Promise<true> {

@@ -1,5 +1,5 @@
 import { TripAggregate } from './trip.aggregate';
-import { WentOutEvent } from './event/went.out.event';
+import { TripBicycleType, WentOutEvent } from './event/went.out.event';
 import { AbstractEventSubscriber } from '../../abstract.event.subscriber';
 import { TripEvent } from './event/trip.event';
 
@@ -27,7 +27,11 @@ export class TripProjection extends AbstractEventSubscriber<TripEvent> {
     }
   }
 
-  public getDistance(year: number, month: number): number {
+  public getDistance(
+    year: number,
+    month: number,
+    bicycleType?: TripBicycleType,
+  ): number {
     return this._distanceByMonth.get(year)?.get(month) ?? 0;
   }
 
